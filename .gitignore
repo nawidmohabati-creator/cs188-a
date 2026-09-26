@@ -1,0 +1,26 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Python cache
+*.pyc
+
+# Database files
+*.db
+*.sqlite3
+
+# HTTPS certificates and private keys
+*.crt
+*.pem
+*.key
+
+# Environment variables and API keys
+.env
+.env.*
