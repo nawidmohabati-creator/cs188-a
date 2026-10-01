@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.scripts]
-cs188-a3 = "cs188_a3:main"
+cs188-a3 = "cs188_a3.app:run_app"
 
 [build-system]
 requires = ["uv_build>=0.12.9,<0.13.0"]
