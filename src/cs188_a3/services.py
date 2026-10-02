@@ -1,8 +1,12 @@
 from pathlib import Path
 
 from datetime import date
+import requests
 
 from . import db
+
+GEOCODING_API_URL = "https://geocoding-api.open-meteo.com/v1/search"
+WEATHER_API_URL = "https://api.open-meteo.com/v1/forecast"
 
 class NotFound(Exception):
     """Indicate that a requested trip does not exist."""
@@ -262,3 +266,59 @@ def update_trip(
 
     updated_trip.pop("owner_id", None)
     return updated_trip
+
+
+
+def search_destination(city: str) -> dict:
+    """Search for a destination and return its location information."""
+    if not isinstance(city, str) or not city.strip():
+        raise ValidationError("City must be a non-blank string")
+
+    response = requests.get(
+        GEOCODING_API_URL,
+        params={
+            "name": city.strip(),
+            "count": 1,
+            "language": "en",
+            "format": "json",
+        },
+        timeout=10,
+    )
+    response.raise_for_status()
+
+    data = response.json()
+
+    if not data.get("results"):
+        raise NotFound("Destination not found")
+
+    result = data["results"][0]
+
+    return {
+        "name": result["name"],
+        "latitude": result["latitude"],
+        "longitude": result["longitude"],
+        "country": result.get("country"),
+    }
+
+
+def get_destination_weather(latitude: float, longitude: float) -> dict:
+    """Return current weather for a destination."""
+    response = requests.get(
+        WEATHER_API_URL,
+        params={
+            "latitude": latitude,
+            "longitude": longitude,
+            "current": "temperature_2m,wind_speed_10m",
+        },
+        timeout=10,
+    )
+    response.raise_for_status()
+
+    data = response.json()
+
+    return {
+        "temperature": data["current"]["temperature_2m"],
+        "temperature_unit": data["current_units"]["temperature_2m"],
+        "wind_speed": data["current"]["wind_speed_10m"],
+        "wind_speed_unit": data["current_units"]["wind_speed_10m"],
+    }

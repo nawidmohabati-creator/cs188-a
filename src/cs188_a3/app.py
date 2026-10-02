@@ -5,7 +5,7 @@ from flask import Flask
 from flask_restful import Api
 
 from .db import init_db
-from .resources import Register, Profile, TripList, TripDetail, bcrypt
+from .resources import Register, Profile, TripList, TripDetail, Destination, bcrypt
 
 def create_app(db_path: str | Path = "trips.db") -> Flask:
     """Create and configure the Trip Planner application."""
@@ -25,7 +25,8 @@ def create_app(db_path: str | Path = "trips.db") -> Flask:
     "/trips/<int:trip_id>",
     "/trips/<int(signed=True):trip_id>",
 )
-
+    api.add_resource(Destination, "/destination")
+    
     return app
 
 

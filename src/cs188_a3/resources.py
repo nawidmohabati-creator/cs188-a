@@ -6,6 +6,7 @@ from flask import current_app, g, request
 from flask_restful import Resource
 from flask_bcrypt import Bcrypt
 
+import requests
 from . import db
 
 from .auth import auth_required
@@ -152,3 +153,50 @@ class TripDetail(Resource):
             return {"message": "You do not own this trip"}, 403
 
         return {"message": "Trip deleted successfully"}, 200
+
+
+class Destination(Resource):
+    """Provide destination search and weather information."""
+
+    def get(self):
+        """Search for a destination by city name."""
+        city = request.args.get("city")
+
+        try:
+            destination = services.search_destination(city)
+        except services.ValidationError as error:
+            return {"message": str(error)}, 400
+        except services.NotFound as error:
+            return {"message": str(error)}, 404
+        except requests.RequestException:
+            return {"message": "External API request failed"}, 502
+
+        return destination, 200
+
+
+    def post(self):
+        """Return weather information for a destination."""
+        data = request.get_json(silent=True)
+
+        if not isinstance(data, dict):
+            return {"message": "A JSON object is required"}, 400
+
+        city = data.get("city")
+
+        try:
+            destination = services.search_destination(city)
+            weather = services.get_destination_weather(
+                destination["latitude"],
+                destination["longitude"],
+            )
+        except services.ValidationError as error:
+            return {"message": str(error)}, 400
+        except services.NotFound as error:
+            return {"message": str(error)}, 404
+        except requests.RequestException:
+            return {"message": "External API request failed"}, 502
+
+        return {
+            "destination": destination,
+            "weather": weather,
+        }, 200
