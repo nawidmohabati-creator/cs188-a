@@ -1,3 +1,5 @@
+from . import db, services
+
 import sqlite3
 
 from flask import current_app, g, request
@@ -59,3 +61,94 @@ class Profile(Resource):
             "id": g.user_id,
             "username": g.username
         }, 200
+
+
+
+class TripList(Resource):
+    """Handle requests for the trip collection."""
+
+    @auth_required
+    def post(self) -> tuple[dict, int, dict]:
+        """Create a trip owned by the authenticated user."""
+        data = request.get_json(silent=True)
+
+        if not isinstance(data, dict):
+            return {"message": "A JSON object is required"}, 400
+
+        try:
+            trip = services.create_trip(
+                current_app.config["DB_PATH"],
+                g.user_id,
+                data,
+            )
+        except services.ValidationError as error:
+            return {"message": str(error)}, 400
+
+        return trip, 201, {"Location": f"/trips/{trip['id']}"}
+
+    def get(self) -> tuple[list[dict], int]:
+        """Return all trips, optionally filtered by city."""
+        city = request.args.get("city")
+
+        trips = services.list_trips(
+            current_app.config["DB_PATH"],
+            city,
+        )
+
+        return trips, 200
+
+
+class TripDetail(Resource):
+    """Handle requests for one trip."""
+
+    def get(self, trip_id: int) -> tuple[dict, int]:
+        """Return one trip by its ID."""
+        try:
+            trip = services.get_trip(
+                current_app.config["DB_PATH"],
+                trip_id,
+            )
+        except services.NotFound:
+            return {"message": "Trip not found"}, 404
+
+        return trip, 200
+
+    @auth_required
+    def patch(self, trip_id: int) -> tuple[dict, int]:
+        """Update a trip owned by the authenticated user."""
+        data = request.get_json(silent=True)
+
+        if not isinstance(data, dict):
+            return {"message": "A JSON object is required"}, 400
+
+        try:
+            trip = services.update_trip(
+                current_app.config["DB_PATH"],
+                g.user_id,
+                trip_id,
+                data,
+            )
+        except services.NotFound:
+            return {"message": "Trip not found"}, 404
+        except services.Forbidden:
+            return {"message": "You do not own this trip"}, 403
+        except services.ValidationError as error:
+            return {"message": str(error)}, 400
+
+        return trip, 200
+
+    @auth_required
+    def delete(self, trip_id: int) -> tuple[dict, int]:
+        """Delete a trip owned by the authenticated user."""
+        try:
+            services.delete_trip(
+                current_app.config["DB_PATH"],
+                g.user_id,
+                trip_id,
+            )
+        except services.NotFound:
+            return {"message": "Trip not found"}, 404
+        except services.Forbidden:
+            return {"message": "You do not own this trip"}, 403
+
+        return {"message": "Trip deleted successfully"}, 200

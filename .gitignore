@@ -24,3 +24,4 @@ wheels/
 # Environment variables and API keys
 .env
 .env.*
+.DS_Store
