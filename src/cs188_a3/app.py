@@ -21,9 +21,9 @@ def create_app(db_path: str | Path = "trips.db") -> Flask:
     api.add_resource(Profile, "/profile")
     api.add_resource(TripList, "/trips")
     api.add_resource(
-    TripDetail,
-    "/trips/<int:trip_id>",
-    "/trips/<int(signed=True):trip_id>",
+        TripDetail,
+        "/trips/<int:trip_id>",
+        "/trips/<int(signed=True):trip_id>",
 )
     api.add_resource(Destination, "/destination")
     

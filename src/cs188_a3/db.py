@@ -142,6 +142,7 @@ def update_trip(
 ) -> None:
     """Update the provided fields for one trip."""
     with sqlite3.connect(db_path) as conn:
+        # It updates only the fields that were included in the PATCH request.
         if "city" in changes:
             conn.execute(
                 "UPDATE trips SET city = ? WHERE id = ?",

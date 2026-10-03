@@ -6,8 +6,8 @@ from flask import current_app, g, request
 from flask_restful import Resource
 from flask_bcrypt import Bcrypt
 
+# requests handles errors from calls to the external Open-Meteo API.
 import requests
-from . import db
 
 from .auth import auth_required
 
@@ -158,7 +158,7 @@ class TripDetail(Resource):
 class Destination(Resource):
     """Provide destination search and weather information."""
 
-    def get(self):
+    def get(self) -> tuple[dict, int]:
         """Search for a destination by city name."""
         city = request.args.get("city")
 
@@ -174,7 +174,7 @@ class Destination(Resource):
         return destination, 200
 
 
-    def post(self):
+    def post(self) -> tuple[dict, int]:
         """Return weather information for a destination."""
         data = request.get_json(silent=True)
 

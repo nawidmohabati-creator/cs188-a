@@ -12,7 +12,8 @@ bcrypt = Bcrypt()
 def auth_required(func: Callable) -> Callable:
     """Require valid HTTP Basic authentication for an endpoint."""
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: object, **kwargs: object) -> object:
+        """Authenticate the request before calling the protected endpoint."""
         auth = request.authorization
 
         if auth is None or not auth.username or not auth.password:

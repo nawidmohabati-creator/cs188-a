@@ -1,6 +1,8 @@
 from pathlib import Path
 
 from datetime import date
+
+# requests sends HTTP requests to the external Open-Meteo API.
 import requests
 
 from . import db
@@ -251,6 +253,7 @@ def update_trip(
     if trip["owner_id"] != user_id:
         raise Forbidden("You do not own this trip")
 
+    # These use updated dates when provided; otherwise keep the trip's existing dates.
     start_date = changes.get("start_date", trip["start_date"])
     end_date = changes.get("end_date", trip["end_date"])
 
@@ -274,6 +277,7 @@ def search_destination(city: str) -> dict:
     if not isinstance(city, str) or not city.strip():
         raise ValidationError("City must be a non-blank string")
 
+    # Send the city name to Open-Meteo to find its coordinates.
     response = requests.get(
         GEOCODING_API_URL,
         params={
@@ -303,6 +307,8 @@ def search_destination(city: str) -> dict:
 
 def get_destination_weather(latitude: float, longitude: float) -> dict:
     """Return current weather for a destination."""
+
+    # This function send the destination coordinates to Open-Meteo to get current weather.
     response = requests.get(
         WEATHER_API_URL,
         params={
