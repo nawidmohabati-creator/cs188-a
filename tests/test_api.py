@@ -258,3 +258,53 @@ def test_invalid_trip_ids(client, trip_id: int) -> None:
 
     assert response.status_code == 404
     assert response.get_json()["message"] == "Trip not found"
+
+
+def test_destination_get(client) -> None:
+    """Test that a city can be searched using the destination endpoint."""
+    response = client.get("/destination?city=Chicago")
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+    assert data["name"] == "Chicago"
+    assert "latitude" in data
+    assert "longitude" in data
+    assert "country" in data
+
+
+def test_destination_post(client) -> None:
+    """Test that weather information can be retrieved for a destination."""
+    response = client.post(
+        "/destination",
+        json={"city": "Chicago"},
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+    assert data["destination"]["name"] == "Chicago"
+    assert "temperature" in data["weather"]
+    assert "temperature_unit" in data["weather"]
+    assert "wind_speed" in data["weather"]
+    assert "wind_speed_unit" in data["weather"]
+
+
+def test_wrong_credentials(client) -> None:
+    """Test that wrong credentials cannot access a protected endpoint."""
+    username, password = make_user(client, "alice")
+
+    response = client.post(
+        "/trips",
+        auth=(username, "wrongpassword"),
+        json={
+            "city": "Chicago",
+            "start_date": "2026-11-10",
+            "end_date": "2026-11-15",
+            "budget": 1500,
+            "notes": "Vacation trip",
+        },
+    )
+
+    assert response.status_code == 401
+    assert response.get_json()["message"] == "Invalid username or password"
